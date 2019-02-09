@@ -1,0 +1,7 @@
+/src
+/.huskyrc.json
+/.travis.yml
+/.prettierrc.json
+/.vscode
+/tslint.json
+/tsconfig.json
