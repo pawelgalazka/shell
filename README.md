@@ -9,7 +9,7 @@ shell('http-server', { async: true })
 ```
 
 
-## sh(cmd, options)
+## shell(cmd, options)
 
 *Options:*
 
