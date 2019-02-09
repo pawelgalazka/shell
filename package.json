@@ -1,0 +1,37 @@
+{
+  "name": "@pawelgalazka/shell",
+  "version": "1.0.0",
+  "description": "Simple exec of shell commands",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "yarn lint",
+    "lint": "tslint -c tslint.json 'src/*.ts'"
+  },
+  "lint-staged": {
+    "src/*.{ts,tsx}": [
+      "tslint --fix",
+      "git add"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pawelgalazka/shell.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "shell",
+    "bash",
+    "exec",
+    "spawn"
+  ],
+  "author": "Paweł Gałązka",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pawelgalazka/shell/issues"
+  },
+  "homepage": "https://github.com/pawelgalazka/shell#readme"
+}
