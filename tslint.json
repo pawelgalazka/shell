@@ -3,7 +3,9 @@
       "tslint:latest", "tslint-config-prettier"
   ],
   "rules": {
-      "prettier": true
+      "prettier": true,
+      "no-console": false,
+      "no-implicit-dependencies": false
   },
   "rulesDirectory": ["tslint-plugin-prettier"]
 }
