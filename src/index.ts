@@ -1,4 +1,6 @@
 import { execSync, spawn, StdioOptions } from "child_process"
+// import { Readable, ReadableOptions, Transform } from "stream"
+import { Transform } from "stream"
 
 export class ShellError extends Error {
   constructor(message: string) {
@@ -12,11 +14,38 @@ interface ICommonShellOptions {
   env?: NodeJS.ProcessEnv
   stdio?: StdioOptions
   timeout?: number
+  prefix?: string
 }
 
 export interface IShellOptions extends ICommonShellOptions {
   async?: boolean
 }
+
+// class StringReadStream extends Readable {
+//   public value: string[]
+
+//   constructor(value: string, options?: ReadableOptions) {
+//     super(options)
+//     this.value = value.split("\n").reverse()
+//   }
+
+//   public _read() {
+//     if (this.value.length > 0) {
+//       this.push(this.value.pop())
+//     } else {
+//       this.push(null)
+//     }
+//   }
+// }
+
+const createPrefixTransformStream = (prefix: string) =>
+  new Transform({
+    transform(chunk, encoding, callback) {
+      const data = chunk.toString()
+
+      callback(undefined, `${prefix} ${data}`)
+    }
+  })
 
 function shellAsync(
   command: string,
@@ -26,10 +55,23 @@ function shellAsync(
     const nextOptions = {
       ...options,
       shell: true,
-      stdio: options.stdio || "inherit"
+      stdio: (options.prefix && "pipe") || options.stdio || "inherit"
     }
     const asyncProcess = spawn(command, nextOptions)
     let output: string | null = null
+
+    if (options.prefix) {
+      const stdoutPrefixTransformStream = createPrefixTransformStream(
+        options.prefix
+      )
+      const stderrPrefixTransformStream = createPrefixTransformStream(
+        options.prefix
+      )
+      stdoutPrefixTransformStream.pipe(process.stdout)
+      stderrPrefixTransformStream.pipe(process.stderr)
+      asyncProcess.stdout.pipe(stdoutPrefixTransformStream)
+      asyncProcess.stderr.pipe(stderrPrefixTransformStream)
+    }
 
     asyncProcess.on("error", (error: Error) => {
       reject(

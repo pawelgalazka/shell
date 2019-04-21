@@ -5,7 +5,8 @@
   "rules": {
       "prettier": true,
       "no-console": false,
-      "no-implicit-dependencies": false
+      "no-implicit-dependencies": false,
+      "max-classes-per-file": false
   },
   "rulesDirectory": ["tslint-plugin-prettier"]
 }
