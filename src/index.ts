@@ -54,6 +54,11 @@ function shellAsync(
   return new Promise((resolve, reject) => {
     const nextOptions = {
       ...options,
+      env: {
+        ...options.env,
+        ...process.env,
+        FORCE_COLOR: "1"
+      },
       shell: true,
       stdio: (options.prefix && "pipe") || options.stdio || "inherit"
     }
