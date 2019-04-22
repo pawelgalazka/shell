@@ -72,10 +72,8 @@ function shellAsync(
       const stderrPrefixTransformStream = createPrefixTransformStream(
         options.prefix
       )
-      stdoutPrefixTransformStream.pipe(process.stdout)
-      stderrPrefixTransformStream.pipe(process.stderr)
-      asyncProcess.stdout.pipe(stdoutPrefixTransformStream)
-      asyncProcess.stderr.pipe(stderrPrefixTransformStream)
+      asyncProcess.stdout.pipe(stdoutPrefixTransformStream).pipe(process.stdout)
+      asyncProcess.stderr.pipe(stderrPrefixTransformStream).pipe(process.stderr)
     }
 
     asyncProcess.on("error", (error: Error) => {
