@@ -151,9 +151,8 @@ export function shell(command: string, options: IShellOptions = {}) {
   const normalizedOptions = {
     ...options,
     env: {
-      ...process.env,
       FORCE_COLOR: "1",
-      ...options.env
+      ...(options.env || process.env)
     },
     stdio: options.stdio || "inherit"
   }
