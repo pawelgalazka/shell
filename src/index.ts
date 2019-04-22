@@ -9,16 +9,19 @@ export class ShellError extends Error {
   }
 }
 
-interface ICommonShellOptions {
+export interface IShellOptions {
   cwd?: string
   env?: NodeJS.ProcessEnv
   stdio?: StdioOptions
   timeout?: number
   prefix?: string
+  shell?: boolean | string
+  async?: boolean
 }
 
-export interface IShellOptions extends ICommonShellOptions {
-  async?: boolean
+interface INormalizedShellOptions extends IShellOptions {
+  env: NodeJS.ProcessEnv
+  stdio: StdioOptions
 }
 
 // class StringReadStream extends Readable {
@@ -49,20 +52,16 @@ const createPrefixTransformStream = (prefix: string) =>
 
 function shellAsync(
   command: string,
-  options: ICommonShellOptions = {}
+  options: INormalizedShellOptions
 ): Promise<string | null> {
   return new Promise((resolve, reject) => {
-    const nextOptions = {
-      ...options,
-      env: {
-        ...options.env,
-        ...process.env,
-        FORCE_COLOR: "1"
-      },
+    const spawnOptions = {
+      cwd: options.cwd,
+      env: options.env,
       shell: true,
-      stdio: (options.prefix && "pipe") || options.stdio || "inherit"
+      stdio: (options.prefix && "pipe") || options.stdio
     }
-    const asyncProcess = spawn(command, nextOptions)
+    const asyncProcess = spawn(command, spawnOptions)
     let output: string | null = null
 
     if (options.prefix) {
@@ -72,6 +71,7 @@ function shellAsync(
       const stderrPrefixTransformStream = createPrefixTransformStream(
         options.prefix
       )
+      stderrPrefixTransformStream.pipe(process.stderr)
       asyncProcess.stdout.pipe(stdoutPrefixTransformStream).pipe(process.stdout)
       asyncProcess.stderr.pipe(stderrPrefixTransformStream).pipe(process.stderr)
     }
@@ -96,31 +96,33 @@ function shellAsync(
       }
     })
 
-    if (nextOptions.stdio === "pipe") {
+    if (spawnOptions.stdio === "pipe") {
       asyncProcess.stdout.on("data", (buffer: Buffer) => {
         output = buffer.toString()
       })
     }
 
-    if (nextOptions.timeout) {
+    if (options.timeout) {
       setTimeout(() => {
         asyncProcess.kill()
         reject(new ShellError(`Command timeout: ${command}`))
-      }, nextOptions.timeout)
+      }, options.timeout)
     }
   })
 }
 
 function shellSync(
   command: string,
-  options: ICommonShellOptions = {}
+  options: INormalizedShellOptions
 ): string | null {
   try {
-    const nextOptions = {
-      ...options,
-      stdio: options.stdio || "inherit"
+    const execSyncOptions = {
+      cwd: options.cwd,
+      env: options.env,
+      stdio: options.stdio,
+      timeout: options.timeout
     }
-    const buffer: string | Buffer = execSync(command, nextOptions)
+    const buffer: string | Buffer = execSync(command, execSyncOptions)
     if (buffer) {
       return buffer.toString()
     }
@@ -145,8 +147,17 @@ export function shell(
   options?: IShellOptions
 ): Promise<string | null> | string | null
 
-export function shell(command: string, options?: IShellOptions) {
-  return options && options.async
-    ? shellAsync(command, options)
-    : shellSync(command, options)
+export function shell(command: string, options: IShellOptions = {}) {
+  const normalizedOptions = {
+    ...options,
+    env: {
+      ...process.env,
+      FORCE_COLOR: "1",
+      ...options.env
+    },
+    stdio: options.stdio || "inherit"
+  }
+  return normalizedOptions.async
+    ? shellAsync(command, normalizedOptions)
+    : shellSync(command, normalizedOptions)
 }
