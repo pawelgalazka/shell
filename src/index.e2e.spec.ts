@@ -32,10 +32,8 @@ describe("shell()", () => {
     })
 
     it("returns command output", () => {
-      return shell("echo 'command output'", options as IAsyncShellOptions).then(
-        output => {
-          expect(output).toEqual("command output\n")
-        }
+      return expect(shell("echo 'command output'", options)).resolves.toEqual(
+        "command output\n"
       )
     })
 
@@ -62,14 +60,18 @@ describe("shell()", () => {
       })
 
       it("does not write to parent process", () => {
-        shell("echo 'command output'", options)
-        expect(stdoutWrite).not.toHaveBeenCalled()
+        return shell(
+          "echo 'command output'",
+          options as IAsyncShellOptions
+        ).then(() => {
+          expect(stdoutWrite).not.toHaveBeenCalled()
+        })
       })
 
       it("returns command output", () => {
-        return expect(
-          shell("echo 'command output'", options as IAsyncShellOptions)
-        ).resolves.toEqual("command output\n")
+        return expect(shell("echo 'command output'", options)).resolves.toEqual(
+          "command output\n"
+        )
       })
     })
 

@@ -43,7 +43,7 @@ export function setupStdoutStderrStreams(
     }
     childProcess.stdout.pipe(stdoutPrefixTransformStream)
     childProcess.stderr.pipe(stderrPrefixTransformStream)
-  } else {
+  } else if (!options.silent) {
     childProcess.stdout.pipe(options.parentProcess.stdout)
     childProcess.stderr.pipe(options.parentProcess.stderr)
   }
