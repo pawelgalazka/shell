@@ -59,8 +59,14 @@ function shellAsync(
     if (options.prefix) {
       const stdoutPrefixTransformStream = prefixTransformStream(options.prefix)
       const stderrPrefixTransformStream = prefixTransformStream(options.prefix)
-      asyncProcess.stdout.pipe(stdoutPrefixTransformStream).pipe(process.stdout)
-      asyncProcess.stderr.pipe(stderrPrefixTransformStream).pipe(process.stderr)
+      if (options.stdio === "inherit" || options.stdio[1] === "inherit") {
+        stdoutPrefixTransformStream.pipe(process.stdout)
+      }
+      if (options.stdio === "inherit" || options.stdio[2] === "inherit") {
+        stderrPrefixTransformStream.pipe(process.stdout)
+      }
+      asyncProcess.stdout.pipe(stdoutPrefixTransformStream)
+      asyncProcess.stderr.pipe(stderrPrefixTransformStream)
     }
 
     asyncProcess.on("error", (error: Error) => {
