@@ -25,11 +25,13 @@ export interface IShellOptions {
   nopipe?: boolean
   silent?: boolean
   transform?: TransformFunction
+  parentProcess?: NodeJS.Process
 }
 
 export interface INormalizedShellOptions extends IShellOptions {
   env: NodeJS.ProcessEnv
   stdio: NormalizedStdioOptions
+  parentProcess: NodeJS.Process
 }
 
 function shellAsync(
@@ -99,7 +101,7 @@ function shellSync(
         ? transformString(options.transform, buffer.toString())
         : buffer.toString()
       if (!options.silent) {
-        process.stdout.write(output)
+        options.parentProcess.stdout.write(output)
       }
       return output
     }
@@ -128,19 +130,19 @@ export function shell(
 ): Promise<string | null> | string | null
 
 export function shell(command: string, options: IShellOptions = {}) {
+  const parentProcess = process || options.parentProcess
   const stdio: NormalizedStdioOptions = options.nopipe
     ? options.silent
       ? ["inherit", "ignore", "ignore"]
       : ["inherit", "inherit", "inherit"]
     : ["inherit", "pipe", "pipe"]
-  const transform: TransformFunction = value => value
   const normalizedOptions: INormalizedShellOptions = {
-    transform,
     ...options,
     env: {
       FORCE_COLOR: "1",
-      ...(options.env || process.env)
+      ...(options.env || parentProcess.env)
     },
+    parentProcess,
     stdio
   }
   return normalizedOptions.async

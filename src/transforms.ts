@@ -38,8 +38,8 @@ export function setupStdoutStderrStreams(
     stdout = stdoutPrefixTransformStream
     stderr = stderrPrefixTransformStream
     if (!options.silent) {
-      stdoutPrefixTransformStream.pipe(process.stdout)
-      stderrPrefixTransformStream.pipe(process.stdout)
+      stdoutPrefixTransformStream.pipe(options.parentProcess.stdout)
+      stderrPrefixTransformStream.pipe(options.parentProcess.stdout)
     }
     childProcess.stdout.pipe(stdoutPrefixTransformStream)
     childProcess.stderr.pipe(stderrPrefixTransformStream)
