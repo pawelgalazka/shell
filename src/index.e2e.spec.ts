@@ -42,11 +42,47 @@ describe("shell()", () => {
     it("writes command output to parent process", () => {
       return shell("echo 'command output'", options as IAsyncShellOptions).then(
         output => {
+          expect(stdoutWrite).toHaveBeenCalledTimes(1)
           expect(stdoutWrite.mock.calls[0][0].toString()).toEqual(
             "command output\n"
           )
         }
       )
+    })
+
+    it("rejects if shell command fails", () => {
+      return expect(shell("exit 1", options)).rejects.toThrow(
+        "Command failed: exit 1"
+      )
+    })
+
+    describe("and option silent=true", () => {
+      beforeEach(() => {
+        options.silent = true
+      })
+
+      it("does not write to parent process", () => {
+        shell("echo 'command output'", options)
+        expect(stdoutWrite).not.toHaveBeenCalled()
+      })
+
+      it("returns command output", () => {
+        return expect(
+          shell("echo 'command output'", options as IAsyncShellOptions)
+        ).resolves.toEqual("command output\n")
+      })
+    })
+
+    describe("and option nopipe=true", () => {
+      beforeEach(() => {
+        options.nopipe = true
+      })
+
+      it.skip("does not return command output", () => {
+        return expect(
+          shell("echo 'command output'", options)
+        ).resolves.toBeNull()
+      })
     })
   })
 
@@ -59,6 +95,7 @@ describe("shell()", () => {
 
     it("writes command output to parent process", () => {
       shell("echo 'command output'", options)
+      expect(stdoutWrite).toHaveBeenCalledTimes(1)
       expect(stdoutWrite.mock.calls[0][0].toString()).toEqual(
         "command output\n"
       )
