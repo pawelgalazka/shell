@@ -10,7 +10,7 @@ export function transformStream(transform: TransformFunction) {
     transform(chunk, encoding, callback) {
       const data = chunk.toString()
 
-      const transformedOutput = transform(data)
+      const transformedOutput = transformString(transform, data)
       callback(undefined, transformedOutput)
     }
   })
