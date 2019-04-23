@@ -30,7 +30,6 @@ export interface IShellOptions {
 export interface INormalizedShellOptions extends IShellOptions {
   env: NodeJS.ProcessEnv
   stdio: NormalizedStdioOptions
-  transform: TransformFunction
 }
 
 function shellAsync(
@@ -96,7 +95,9 @@ function shellSync(
     }
     const buffer: string | Buffer = execSync(command, execSyncOptions)
     if (buffer) {
-      const output = transformString(options.transform, buffer.toString())
+      const output = options.transform
+        ? transformString(options.transform, buffer.toString())
+        : buffer.toString()
       if (!options.silent) {
         process.stdout.write(output)
       }
@@ -104,7 +105,9 @@ function shellSync(
     }
     return null
   } catch (error) {
-    const message = transformString(options.transform, error.message)
+    const message = options.transform
+      ? transformString(options.transform, error.message)
+      : error.message
     throw new ShellError(message)
   }
 }
