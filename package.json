@@ -8,10 +8,10 @@
     "clean": "rm -rf ./lib",
     "build": "tsc",
     "test": "yarn lint && yarn build && jest --coverage",
-    "test:unit": "jest ./src/",
-    "test:e2e": "jest ./tests",
+    "test:unit": "jest ./src/index.spec.ts",
+    "test:e2e": "jest ./src/index.e2e.spec.ts",
     "lint": "tslint -c tslint.json 'src/*.ts'",
-    "sandbox": "ts-node ./tests/sandbox.ts"
+    "sandbox": "ts-node ./sandbox/sandbox.ts"
   },
   "lint-staged": {
     "src/*.{ts,tsx}": [
