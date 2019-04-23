@@ -36,7 +36,9 @@ const prefixTransformStream = (prefix: string) =>
 const prefixTransformString = (prefix: string, data: string) => {
   const lineSeparator = "\n"
   const dataArray = data.split(lineSeparator)
-  const prefixedDataArray = dataArray.map(line => `${prefix} ${line}`)
+  const prefixedDataArray = dataArray.map(line =>
+    line ? `${prefix} ${line}` : line
+  )
   const prefixedData = prefixedDataArray.join(lineSeparator)
   return prefixedData
 }
@@ -118,15 +120,16 @@ function shellSync(
     }
     const buffer: string | Buffer = execSync(command, execSyncOptions)
     if (buffer) {
+      const output = options.prefix
+        ? prefixTransformString(options.prefix, buffer.toString())
+        : buffer.toString()
       if (
         execSyncOptions.stdio !== "inherit" &&
         (options.stdio === "inherit" || options.stdio[1] === "inherit")
       ) {
-        process.stdout.write(buffer)
+        process.stdout.write(output)
       }
-      return options.prefix
-        ? prefixTransformString(options.prefix, buffer.toString())
-        : buffer.toString()
+      return output
     }
     return null
   } catch (error) {
