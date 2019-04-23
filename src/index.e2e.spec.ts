@@ -93,8 +93,10 @@ describe("shell()", () => {
       })
 
       it("transforms command output", () => {
-        return expect(shell("echo 'command output'", options)).resolves.toEqual(
-          "[prefix] command output\n"
+        return expect(
+          shell("echo 'command output 1' ; echo 'command output 2'", options)
+        ).resolves.toEqual(
+          "[prefix] command output 1\n[prefix] command output 2\n"
         )
       })
     })
@@ -152,9 +154,9 @@ describe("shell()", () => {
       })
 
       it("transforms command output", () => {
-        expect(shell("echo 'command output'", options)).toEqual(
-          "[prefix] command output\n"
-        )
+        expect(
+          shell("echo 'command output 1' ; echo 'command output 2'", options)
+        ).toEqual("[prefix] command output 1\n[prefix] command output 2\n")
       })
     })
   })
