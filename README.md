@@ -36,3 +36,9 @@ const { shell, prefixTransform } = require('@pawelgalazka/shell')
 
 shell('echo "test"', { transform: prefixTransform('[prefix]') })
 ```
+
+```sh
+$ node ./script.js
+echo "test"
+[prefix] test
+```
