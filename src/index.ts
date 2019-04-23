@@ -1,4 +1,12 @@
-import { execSync, spawn, StdioOptions } from "child_process"
+import { execSync, spawn } from "child_process"
+
+import {
+  setupStdoutStderrStreams,
+  TransformFunction,
+  transformString
+} from "./transforms"
+
+export { prefixTransform } from "./transforms"
 
 export class ShellError extends Error {
   constructor(message: string) {
@@ -7,29 +15,47 @@ export class ShellError extends Error {
   }
 }
 
-interface ICommonShellOptions {
+type NormalizedStdioOptions = Array<"pipe" | "ignore" | "inherit">
+
+export interface IShellOptions {
   cwd?: string
   env?: NodeJS.ProcessEnv
-  stdio?: StdioOptions
   timeout?: number
+  async?: boolean
+  nopipe?: boolean
+  silent?: boolean
+  transform?: TransformFunction
+  parentProcess?: NodeJS.Process
 }
 
-export interface IShellOptions extends ICommonShellOptions {
-  async?: boolean
+export interface IAsyncShellOptions extends IShellOptions {
+  async: true
+}
+
+export interface ISyncShellOptions extends IShellOptions {
+  async: false | undefined
+}
+
+export interface INormalizedShellOptions extends IShellOptions {
+  env: NodeJS.ProcessEnv
+  stdio: NormalizedStdioOptions
+  parentProcess: NodeJS.Process
 }
 
 function shellAsync(
   command: string,
-  options: ICommonShellOptions = {}
+  options: INormalizedShellOptions
 ): Promise<string | null> {
   return new Promise((resolve, reject) => {
-    const nextOptions = {
-      ...options,
+    const spawnOptions = {
+      cwd: options.cwd,
+      env: options.env,
       shell: true,
-      stdio: options.stdio || "inherit"
+      stdio: options.stdio
     }
-    const asyncProcess = spawn(command, nextOptions)
+    const asyncProcess = spawn(command, spawnOptions)
     let output: string | null = null
+    const { stdout } = setupStdoutStderrStreams(options, asyncProcess)
 
     asyncProcess.on("error", (error: Error) => {
       reject(
@@ -51,48 +77,59 @@ function shellAsync(
       }
     })
 
-    if (nextOptions.stdio === "pipe") {
-      asyncProcess.stdout.on("data", (buffer: Buffer) => {
+    if (stdout) {
+      stdout.on("data", (buffer: Buffer) => {
         output = buffer.toString()
       })
     }
 
-    if (nextOptions.timeout) {
+    if (options.timeout) {
       setTimeout(() => {
         asyncProcess.kill()
         reject(new ShellError(`Command timeout: ${command}`))
-      }, nextOptions.timeout)
+      }, options.timeout)
     }
   })
 }
 
 function shellSync(
   command: string,
-  options: ICommonShellOptions = {}
+  options: INormalizedShellOptions
 ): string | null {
   try {
-    const nextOptions = {
-      ...options,
-      stdio: options.stdio || "inherit"
+    const execSyncOptions = {
+      cwd: options.cwd,
+      env: options.env,
+      stdio: options.stdio,
+      timeout: options.timeout
     }
-    const buffer: string | Buffer = execSync(command, nextOptions)
+    const buffer: string | Buffer = execSync(command, execSyncOptions)
     if (buffer) {
-      return buffer.toString()
+      const output = options.transform
+        ? transformString(options.transform, buffer.toString())
+        : buffer.toString()
+      if (!options.silent) {
+        options.parentProcess.stdout.write(output)
+      }
+      return output
     }
     return null
   } catch (error) {
-    throw new ShellError(error.message)
+    const message = options.transform
+      ? transformString(options.transform, error.message)
+      : error.message
+    throw new ShellError(message)
   }
 }
 
 export function shell(
   command: string,
-  options: IShellOptions & { async: true }
+  options: IAsyncShellOptions
 ): Promise<string | null>
 
 export function shell(
   command: string,
-  options?: IShellOptions & { async?: false | null }
+  options?: ISyncShellOptions
 ): string | null
 
 export function shell(
@@ -100,8 +137,23 @@ export function shell(
   options?: IShellOptions
 ): Promise<string | null> | string | null
 
-export function shell(command: string, options?: IShellOptions) {
-  return options && options.async
-    ? shellAsync(command, options)
-    : shellSync(command, options)
+export function shell(command: string, options: IShellOptions = {}) {
+  const parentProcess = options.parentProcess || process
+  const stdio: NormalizedStdioOptions = options.nopipe
+    ? options.silent
+      ? ["inherit", "ignore", "ignore"]
+      : ["inherit", "inherit", "inherit"]
+    : ["inherit", "pipe", "pipe"]
+  const normalizedOptions: INormalizedShellOptions = {
+    ...options,
+    env: {
+      FORCE_COLOR: "1",
+      ...(options.env || parentProcess.env)
+    },
+    parentProcess,
+    stdio
+  }
+  return normalizedOptions.async
+    ? shellAsync(command, normalizedOptions)
+    : shellSync(command, normalizedOptions)
 }
