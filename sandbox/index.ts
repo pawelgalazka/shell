@@ -1,7 +1,7 @@
 import chalk from "chalk"
 import { prefixTransform, shell } from "../src/index"
 
-const scriptPath = "ts-node ./sandbox/script.ts"
+const scriptPath = "ts-node ./sandbox/color.ts"
 
 async function main() {
   console.log("sync:")
