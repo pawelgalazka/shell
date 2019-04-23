@@ -32,20 +32,22 @@ export function setupStdoutStderrStreams(
 ) {
   let stdout: Readable | null = childProcess.stdout
   let stderr: Readable | null = childProcess.stderr
-  if (options.transform) {
-    const stdoutPrefixTransformStream = transformStream(options.transform)
-    const stderrPrefixTransformStream = transformStream(options.transform)
-    stdout = stdoutPrefixTransformStream
-    stderr = stderrPrefixTransformStream
-    if (!options.silent) {
-      stdoutPrefixTransformStream.pipe(options.parentProcess.stdout)
-      stderrPrefixTransformStream.pipe(options.parentProcess.stderr)
+  if (stdout && stderr) {
+    if (options.transform) {
+      const stdoutPrefixTransformStream = transformStream(options.transform)
+      const stderrPrefixTransformStream = transformStream(options.transform)
+      stdout = stdoutPrefixTransformStream
+      stderr = stderrPrefixTransformStream
+      if (!options.silent) {
+        stdoutPrefixTransformStream.pipe(options.parentProcess.stdout)
+        stderrPrefixTransformStream.pipe(options.parentProcess.stderr)
+      }
+      childProcess.stdout.pipe(stdoutPrefixTransformStream)
+      childProcess.stderr.pipe(stderrPrefixTransformStream)
+    } else if (!options.silent) {
+      childProcess.stdout.pipe(options.parentProcess.stdout)
+      childProcess.stderr.pipe(options.parentProcess.stderr)
     }
-    childProcess.stdout.pipe(stdoutPrefixTransformStream)
-    childProcess.stderr.pipe(stderrPrefixTransformStream)
-  } else if (!options.silent) {
-    childProcess.stdout.pipe(options.parentProcess.stdout)
-    childProcess.stderr.pipe(options.parentProcess.stderr)
   }
 
   return {

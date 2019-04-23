@@ -80,7 +80,7 @@ describe("shell()", () => {
         options.nopipe = true
       })
 
-      it.skip("does not return command output", () => {
+      it("does not return command output", () => {
         return expect(
           shell("echo 'command output'", options)
         ).resolves.toBeNull()
