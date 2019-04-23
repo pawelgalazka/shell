@@ -28,6 +28,14 @@ export interface IShellOptions {
   parentProcess?: NodeJS.Process
 }
 
+export interface IAsyncShellOptions extends IShellOptions {
+  async: true
+}
+
+export interface ISyncShellOptions extends IShellOptions {
+  async: false | undefined
+}
+
 export interface INormalizedShellOptions extends IShellOptions {
   env: NodeJS.ProcessEnv
   stdio: NormalizedStdioOptions
@@ -116,12 +124,12 @@ function shellSync(
 
 export function shell(
   command: string,
-  options: IShellOptions & { async: true }
+  options: IAsyncShellOptions
 ): Promise<string | null>
 
 export function shell(
   command: string,
-  options?: IShellOptions & { async?: false | null }
+  options?: ISyncShellOptions
 ): string | null
 
 export function shell(
