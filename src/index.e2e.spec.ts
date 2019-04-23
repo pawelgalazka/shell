@@ -1,4 +1,9 @@
-import { IShellOptions, prefixTransform, shell } from "./index"
+import {
+  IAsyncShellOptions,
+  IShellOptions,
+  prefixTransform,
+  shell
+} from "./index"
 
 describe("shell()", () => {
   let options: IShellOptions
@@ -16,6 +21,24 @@ describe("shell()", () => {
   describe("with async=true option", () => {
     beforeEach(() => {
       options.async = true
+    })
+
+    it("returns command output", () => {
+      return shell("echo 'command output'", options as IAsyncShellOptions).then(
+        output => {
+          expect(output).toEqual("command output\n")
+        }
+      )
+    })
+
+    it.skip("writes command output to parent process", () => {
+      return shell("echo 'command output'", options as IAsyncShellOptions).then(
+        output => {
+          expect(parentProcess.stdout.write).toHaveBeenCalledWith(
+            "command output\n"
+          )
+        }
+      )
     })
   })
 
