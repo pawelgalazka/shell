@@ -130,7 +130,7 @@ export function shell(
 ): Promise<string | null> | string | null
 
 export function shell(command: string, options: IShellOptions = {}) {
-  const parentProcess = process || options.parentProcess
+  const parentProcess = options.parentProcess || process
   const stdio: NormalizedStdioOptions = options.nopipe
     ? options.silent
       ? ["inherit", "ignore", "ignore"]
