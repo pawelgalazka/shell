@@ -156,7 +156,9 @@ export function shell(
 
 export function shell(command: string, options: IShellOptions = {}) {
   const stdio: NormalizedStdioOptions = options.nopipe
-    ? ["inherit", "inherit", "inherit"]
+    ? options.silent
+      ? ["inherit", "ignore", "ignore"]
+      : ["inherit", "inherit", "inherit"]
     : ["inherit", "pipe", "pipe"]
   const transform: TransformFunction = value => value
   const normalizedOptions: INormalizedShellOptions = {
