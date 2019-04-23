@@ -2,8 +2,8 @@ import { Transform } from "stream"
 
 export type TransformFunction = (output: string) => string
 
-export const transformStream = (transform: TransformFunction) =>
-  new Transform({
+export function transformStream(transform: TransformFunction) {
+  return new Transform({
     transform(chunk, encoding, callback) {
       const data = chunk.toString()
 
@@ -11,8 +11,9 @@ export const transformStream = (transform: TransformFunction) =>
       callback(undefined, transformedOutput)
     }
   })
+}
 
-export const transformString = (transform: TransformFunction, data: string) => {
+export function transformString(transform: TransformFunction, data: string) {
   const lineSeparator = "\n"
   const dataArray = data.split(lineSeparator)
   const prefixedDataArray = dataArray.map(line =>
@@ -21,3 +22,7 @@ export const transformString = (transform: TransformFunction, data: string) => {
   const prefixedData = prefixedDataArray.join(lineSeparator)
   return prefixedData
 }
+
+export const prefixTransform: (
+  prefix: string
+) => TransformFunction = prefix => output => `${prefix} ${output}`

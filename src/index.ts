@@ -7,6 +7,8 @@ import {
   transformString
 } from "./transforms"
 
+export { prefixTransform } from "./transforms"
+
 export class ShellError extends Error {
   constructor(message: string) {
     message = message && message.split("\n")[0] // assign only first line
