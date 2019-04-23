@@ -11,7 +11,7 @@
     "test:unit": "jest ./src/index.spec.ts",
     "test:e2e": "jest ./src/index.e2e.spec.ts",
     "lint": "tslint -c tslint.json 'src/*.ts'",
-    "sandbox": "ts-node ./sandbox/sandbox.ts"
+    "sandbox": "ts-node ./sandbox/index.ts"
   },
   "lint-staged": {
     "src/*.{ts,tsx}": [
