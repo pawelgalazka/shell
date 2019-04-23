@@ -39,10 +39,13 @@ export function setupStdoutStderrStreams(
     stderr = stderrPrefixTransformStream
     if (!options.silent) {
       stdoutPrefixTransformStream.pipe(options.parentProcess.stdout)
-      stderrPrefixTransformStream.pipe(options.parentProcess.stdout)
+      stderrPrefixTransformStream.pipe(options.parentProcess.stderr)
     }
     childProcess.stdout.pipe(stdoutPrefixTransformStream)
     childProcess.stderr.pipe(stderrPrefixTransformStream)
+  } else {
+    childProcess.stdout.pipe(options.parentProcess.stdout)
+    childProcess.stderr.pipe(options.parentProcess.stderr)
   }
 
   return {

@@ -1,3 +1,4 @@
+import { Writable } from "stream"
 import {
   IAsyncShellOptions,
   IShellOptions,
@@ -8,12 +9,19 @@ import {
 describe("shell()", () => {
   let options: IShellOptions
   let parentProcess: any
+  let stdoutWrite: jest.Mock<any>
+  let stderrWrite: jest.Mock<any>
 
   beforeEach(() => {
+    stdoutWrite = jest.fn()
+    stderrWrite = jest.fn()
     parentProcess = {
-      stdout: {
-        write: jest.fn()
-      }
+      stderr: new Writable({
+        write: stderrWrite
+      }),
+      stdout: new Writable({
+        write: stdoutWrite
+      })
     }
     options = { parentProcess }
   })
@@ -34,7 +42,7 @@ describe("shell()", () => {
     it.skip("writes command output to parent process", () => {
       return shell("echo 'command output'", options as IAsyncShellOptions).then(
         output => {
-          expect(parentProcess.stdout.write).toHaveBeenCalledWith(
+          expect(stdoutWrite.mock.calls[0][0].toString()).toEqual(
             "command output\n"
           )
         }
@@ -51,7 +59,7 @@ describe("shell()", () => {
 
     it("writes command output to parent process", () => {
       shell("echo 'command output'", options)
-      expect(parentProcess.stdout.write).toHaveBeenCalledWith(
+      expect(stdoutWrite.mock.calls[0][0].toString()).toEqual(
         "command output\n"
       )
     })
@@ -67,7 +75,7 @@ describe("shell()", () => {
 
       it("does not write to parent process", () => {
         shell("echo 'command output'", options)
-        expect(parentProcess.stdout.write).not.toHaveBeenCalled()
+        expect(stdoutWrite).not.toHaveBeenCalled()
       })
 
       it("returns command output", () => {
