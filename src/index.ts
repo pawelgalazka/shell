@@ -27,7 +27,7 @@ interface INormalizedShellOptions extends IShellOptions {
   transform: TransformFunction
 }
 
-const prefixTransformStream = (transform: TransformFunction) =>
+const transformStream = (transform: TransformFunction) =>
   new Transform({
     transform(chunk, encoding, callback) {
       const data = chunk.toString()
@@ -37,7 +37,7 @@ const prefixTransformStream = (transform: TransformFunction) =>
     }
   })
 
-const prefixTransformString = (transform: TransformFunction, data: string) => {
+const transformString = (transform: TransformFunction, data: string) => {
   const lineSeparator = "\n"
   const dataArray = data.split(lineSeparator)
   const prefixedDataArray = dataArray.map(line =>
@@ -63,12 +63,8 @@ function shellAsync(
     let stdout: Readable | null = asyncProcess.stdout
 
     if (options.transform) {
-      const stdoutPrefixTransformStream = prefixTransformStream(
-        options.transform
-      )
-      const stderrPrefixTransformStream = prefixTransformStream(
-        options.transform
-      )
+      const stdoutPrefixTransformStream = transformStream(options.transform)
+      const stderrPrefixTransformStream = transformStream(options.transform)
       stdout = stdoutPrefixTransformStream
       if (!options.silent) {
         stdoutPrefixTransformStream.pipe(process.stdout)
@@ -126,7 +122,7 @@ function shellSync(
     }
     const buffer: string | Buffer = execSync(command, execSyncOptions)
     if (buffer) {
-      const output = prefixTransformString(options.transform, buffer.toString())
+      const output = transformString(options.transform, buffer.toString())
       if (!options.silent) {
         process.stdout.write(output)
       }
@@ -134,7 +130,7 @@ function shellSync(
     }
     return null
   } catch (error) {
-    const message = prefixTransformString(options.transform, error.message)
+    const message = transformString(options.transform, error.message)
     throw new ShellError(message)
   }
 }
