@@ -1,5 +1,11 @@
 import { execSync, spawn } from "child_process"
-import { Readable, Transform } from "stream"
+import { Readable } from "stream"
+
+import {
+  TransformFunction,
+  transformStream,
+  transformString
+} from "./transforms"
 
 export class ShellError extends Error {
   constructor(message: string) {
@@ -8,7 +14,6 @@ export class ShellError extends Error {
   }
 }
 
-type TransformFunction = (output: string) => string
 type NormalizedStdioOptions = Array<"pipe" | "ignore" | "inherit">
 
 export interface IShellOptions {
@@ -25,26 +30,6 @@ interface INormalizedShellOptions extends IShellOptions {
   env: NodeJS.ProcessEnv
   stdio: NormalizedStdioOptions
   transform: TransformFunction
-}
-
-const transformStream = (transform: TransformFunction) =>
-  new Transform({
-    transform(chunk, encoding, callback) {
-      const data = chunk.toString()
-
-      const transformedOutput = transform(data)
-      callback(undefined, transformedOutput)
-    }
-  })
-
-const transformString = (transform: TransformFunction, data: string) => {
-  const lineSeparator = "\n"
-  const dataArray = data.split(lineSeparator)
-  const prefixedDataArray = dataArray.map(line =>
-    line ? transform(line) : line
-  )
-  const prefixedData = prefixedDataArray.join(lineSeparator)
-  return prefixedData
 }
 
 function shellAsync(
