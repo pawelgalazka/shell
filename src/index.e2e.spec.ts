@@ -39,7 +39,7 @@ describe("shell()", () => {
       )
     })
 
-    it.skip("writes command output to parent process", () => {
+    it("writes command output to parent process", () => {
       return shell("echo 'command output'", options as IAsyncShellOptions).then(
         output => {
           expect(stdoutWrite.mock.calls[0][0].toString()).toEqual(
