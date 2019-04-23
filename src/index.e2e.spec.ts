@@ -86,6 +86,18 @@ describe("shell()", () => {
         ).resolves.toBeNull()
       })
     })
+
+    describe("and option transform given", () => {
+      beforeEach(() => {
+        options.transform = prefixTransform("[prefix]")
+      })
+
+      it("transforms command output", () => {
+        return expect(shell("echo 'command output'", options)).resolves.toEqual(
+          "[prefix] command output\n"
+        )
+      })
+    })
   })
 
   describe("with async=false option", () => {
