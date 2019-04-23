@@ -17,31 +17,22 @@ shell('http-server', { async: true })
 {
     cwd: ..., // current working directory (String)
     async: ... // run command asynchronously (true/false), false by default
-    stdio: ... // 'inherit' (default), 'pipe' or 'ignore'
     env: ... // environment key-value pairs (Object)
     timeout: ...
+    transform: // function which transforms the output, line by line
+    nopipe: // if true, it will send output directly to parent process
+    silent: // if true, it won't print anything to the terminal
 }
 ```
 
-*Examples:*
+## prefixTransform(prefix)
 
-To get an output from `shell` function we need to set `stdio` option to `pipe` otherwise
-`output` will be `null`:
+Transform function which can be used for `transform` option.
 
-```javascript
-const output = shell('ls -la', {stdio: 'pipe'})
-sh('http-server .', {async: true, stdio: 'pipe'}).then((output) => {
-  log(output) 
-}).catch((error) => {
-  throw error
-})
+*Example:*
+
+```js
+const { shell, prefixTransform } = require('@pawelgalazka/shell')
+
+shell('echo "test"', { transform: prefixTransform('[prefix]') })
 ```
-
-For `stdio: 'pipe'` outputs are returned but not forwarded to the parent process thus 
-not printed out to the terminal. 
-
-For `stdio: 'inherit'` (default) outputs are passed 
-to the terminal, but `sh` function will resolve (async) / return (sync)
-`null`.
-
-For `stdio: 'ignore'` nothing will be returned or printed
