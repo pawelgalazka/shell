@@ -1,9 +1,8 @@
 import { execSync, spawn } from "child_process"
-import { Readable } from "stream"
 
 import {
+  setupStdoutStderrStreams,
   TransformFunction,
-  transformStream,
   transformString
 } from "./transforms"
 
@@ -28,7 +27,7 @@ export interface IShellOptions {
   transform?: TransformFunction
 }
 
-interface INormalizedShellOptions extends IShellOptions {
+export interface INormalizedShellOptions extends IShellOptions {
   env: NodeJS.ProcessEnv
   stdio: NormalizedStdioOptions
   transform: TransformFunction
@@ -47,19 +46,7 @@ function shellAsync(
     }
     const asyncProcess = spawn(command, spawnOptions)
     let output: string | null = null
-    let stdout: Readable | null = asyncProcess.stdout
-
-    if (options.transform) {
-      const stdoutPrefixTransformStream = transformStream(options.transform)
-      const stderrPrefixTransformStream = transformStream(options.transform)
-      stdout = stdoutPrefixTransformStream
-      if (!options.silent) {
-        stdoutPrefixTransformStream.pipe(process.stdout)
-        stderrPrefixTransformStream.pipe(process.stdout)
-      }
-      asyncProcess.stdout.pipe(stdoutPrefixTransformStream)
-      asyncProcess.stderr.pipe(stderrPrefixTransformStream)
-    }
+    const { stdout } = setupStdoutStderrStreams(options, asyncProcess)
 
     asyncProcess.on("error", (error: Error) => {
       reject(

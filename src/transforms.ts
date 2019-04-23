@@ -1,4 +1,7 @@
-import { Transform } from "stream"
+import { ChildProcess } from "child_process"
+import { Readable, Transform } from "stream"
+
+import { INormalizedShellOptions } from "./index"
 
 export type TransformFunction = (output: string) => string
 
@@ -21,6 +24,31 @@ export function transformString(transform: TransformFunction, data: string) {
   )
   const prefixedData = prefixedDataArray.join(lineSeparator)
   return prefixedData
+}
+
+export function setupStdoutStderrStreams(
+  options: INormalizedShellOptions,
+  childProcess: ChildProcess
+) {
+  let stdout: Readable | null = childProcess.stdout
+  let stderr: Readable | null = childProcess.stderr
+  if (options.transform) {
+    const stdoutPrefixTransformStream = transformStream(options.transform)
+    const stderrPrefixTransformStream = transformStream(options.transform)
+    stdout = stdoutPrefixTransformStream
+    stderr = stderrPrefixTransformStream
+    if (!options.silent) {
+      stdoutPrefixTransformStream.pipe(process.stdout)
+      stderrPrefixTransformStream.pipe(process.stdout)
+    }
+    childProcess.stdout.pipe(stdoutPrefixTransformStream)
+    childProcess.stderr.pipe(stderrPrefixTransformStream)
+  }
+
+  return {
+    stderr,
+    stdout
+  }
 }
 
 export const prefixTransform: (
