@@ -54,11 +54,12 @@ function shellAsync(
     }
     const asyncProcess = spawn(command, spawnOptions)
     let output: string | null = null
-    const stdout: Readable | null = asyncProcess.stdout
+    let stdout: Readable | null = asyncProcess.stdout
 
     if (options.prefix) {
       const stdoutPrefixTransformStream = prefixTransformStream(options.prefix)
       const stderrPrefixTransformStream = prefixTransformStream(options.prefix)
+      stdout = stdoutPrefixTransformStream
       if (options.stdio === "inherit" || options.stdio[1] === "inherit") {
         stdoutPrefixTransformStream.pipe(process.stdout)
       }
