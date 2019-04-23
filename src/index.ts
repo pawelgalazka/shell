@@ -1,6 +1,6 @@
 import { execSync, spawn, StdioOptions } from "child_process"
 // import { Readable, ReadableOptions, Transform } from "stream"
-import { Transform } from "stream"
+import { Readable, Transform } from "stream"
 
 export class ShellError extends Error {
   constructor(message: string) {
@@ -24,24 +24,7 @@ interface INormalizedShellOptions extends IShellOptions {
   stdio: StdioOptions
 }
 
-// class StringReadStream extends Readable {
-//   public value: string[]
-
-//   constructor(value: string, options?: ReadableOptions) {
-//     super(options)
-//     this.value = value.split("\n").reverse()
-//   }
-
-//   public _read() {
-//     if (this.value.length > 0) {
-//       this.push(this.value.pop())
-//     } else {
-//       this.push(null)
-//     }
-//   }
-// }
-
-const createPrefixTransformStream = (prefix: string) =>
+const prefixTransformStream = (prefix: string) =>
   new Transform({
     transform(chunk, encoding, callback) {
       const data = chunk.toString()
@@ -49,6 +32,14 @@ const createPrefixTransformStream = (prefix: string) =>
       callback(undefined, `${prefix} ${data}`)
     }
   })
+
+// const prefixTransformString = (prefix: string, data: string) => {
+//   const lineSeparator = "\n"
+//   const dataArray = data.split(lineSeparator)
+//   const prefixedDataArray = dataArray.map(line => `${prefix} ${line}`)
+//   const prefixedData = prefixedDataArray.join(lineSeparator)
+//   return prefixedData
+// }
 
 function shellAsync(
   command: string,
@@ -63,15 +54,11 @@ function shellAsync(
     }
     const asyncProcess = spawn(command, spawnOptions)
     let output: string | null = null
+    const stdout: Readable | null = asyncProcess.stdout
 
     if (options.prefix) {
-      const stdoutPrefixTransformStream = createPrefixTransformStream(
-        options.prefix
-      )
-      const stderrPrefixTransformStream = createPrefixTransformStream(
-        options.prefix
-      )
-      stderrPrefixTransformStream.pipe(process.stderr)
+      const stdoutPrefixTransformStream = prefixTransformStream(options.prefix)
+      const stderrPrefixTransformStream = prefixTransformStream(options.prefix)
       asyncProcess.stdout.pipe(stdoutPrefixTransformStream).pipe(process.stdout)
       asyncProcess.stderr.pipe(stderrPrefixTransformStream).pipe(process.stderr)
     }
@@ -96,8 +83,8 @@ function shellAsync(
       }
     })
 
-    if (spawnOptions.stdio === "pipe") {
-      asyncProcess.stdout.on("data", (buffer: Buffer) => {
+    if (stdout) {
+      stdout.on("data", (buffer: Buffer) => {
         output = buffer.toString()
       })
     }
