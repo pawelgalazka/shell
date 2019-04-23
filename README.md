@@ -25,6 +25,19 @@ shell('http-server', { async: true })
 }
 ```
 
+```ts
+interface IShellOptions {
+  cwd?: string
+  env?: NodeJS.ProcessEnv
+  timeout?: number
+  async?: boolean
+  nopipe?: boolean
+  silent?: boolean
+  transform?: (output: string) => string
+  parentProcess?: NodeJS.Process
+}
+```
+
 ## prefixTransform(prefix)
 
 Transform function which can be used for `transform` option.
