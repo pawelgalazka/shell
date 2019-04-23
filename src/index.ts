@@ -33,13 +33,13 @@ const prefixTransformStream = (prefix: string) =>
     }
   })
 
-// const prefixTransformString = (prefix: string, data: string) => {
-//   const lineSeparator = "\n"
-//   const dataArray = data.split(lineSeparator)
-//   const prefixedDataArray = dataArray.map(line => `${prefix} ${line}`)
-//   const prefixedData = prefixedDataArray.join(lineSeparator)
-//   return prefixedData
-// }
+const prefixTransformString = (prefix: string, data: string) => {
+  const lineSeparator = "\n"
+  const dataArray = data.split(lineSeparator)
+  const prefixedDataArray = dataArray.map(line => `${prefix} ${line}`)
+  const prefixedData = prefixedDataArray.join(lineSeparator)
+  return prefixedData
+}
 
 function shellAsync(
   command: string,
@@ -106,16 +106,21 @@ function shellSync(
     const execSyncOptions = {
       cwd: options.cwd,
       env: options.env,
-      stdio: options.stdio,
+      stdio: (options.prefix && "pipe") || options.stdio,
       timeout: options.timeout
     }
     const buffer: string | Buffer = execSync(command, execSyncOptions)
     if (buffer) {
-      return buffer.toString()
+      return options.prefix
+        ? prefixTransformString(options.prefix, buffer.toString())
+        : buffer.toString()
     }
     return null
   } catch (error) {
-    throw new ShellError(error.message)
+    const message = options.prefix
+      ? prefixTransformString(options.prefix, error.message)
+      : error.message
+    throw new ShellError(message)
   }
 }
 
