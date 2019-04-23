@@ -111,6 +111,12 @@ function shellSync(
     }
     const buffer: string | Buffer = execSync(command, execSyncOptions)
     if (buffer) {
+      if (
+        execSyncOptions.stdio !== "inherit" &&
+        (options.stdio === "inherit" || options.stdio[1] === "inherit")
+      ) {
+        process.stdout.write(buffer)
+      }
       return options.prefix
         ? prefixTransformString(options.prefix, buffer.toString())
         : buffer.toString()
