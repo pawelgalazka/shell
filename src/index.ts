@@ -1,5 +1,4 @@
-import { execSync, spawn, StdioOptions } from "child_process"
-// import { Readable, ReadableOptions, Transform } from "stream"
+import { execSync, spawn } from "child_process"
 import { Readable, Transform } from "stream"
 
 export class ShellError extends Error {
@@ -9,35 +8,40 @@ export class ShellError extends Error {
   }
 }
 
+type TransformFunction = (output: string) => string
+type NormalizedStdioOptions = Array<"pipe" | "ignore" | "inherit">
+
 export interface IShellOptions {
   cwd?: string
   env?: NodeJS.ProcessEnv
-  stdio?: StdioOptions
   timeout?: number
-  prefix?: string
-  shell?: boolean | string
   async?: boolean
+  nopipe?: boolean
+  silent?: boolean
+  transform?: TransformFunction
 }
 
 interface INormalizedShellOptions extends IShellOptions {
   env: NodeJS.ProcessEnv
-  stdio: StdioOptions
+  stdio: NormalizedStdioOptions
+  transform: TransformFunction
 }
 
-const prefixTransformStream = (prefix: string) =>
+const prefixTransformStream = (transform: TransformFunction) =>
   new Transform({
     transform(chunk, encoding, callback) {
       const data = chunk.toString()
 
-      callback(undefined, `${prefix} ${data}`)
+      const transformedOutput = transform(data)
+      callback(undefined, transformedOutput)
     }
   })
 
-const prefixTransformString = (prefix: string, data: string) => {
+const prefixTransformString = (transform: TransformFunction, data: string) => {
   const lineSeparator = "\n"
   const dataArray = data.split(lineSeparator)
   const prefixedDataArray = dataArray.map(line =>
-    line ? `${prefix} ${line}` : line
+    line ? transform(line) : line
   )
   const prefixedData = prefixedDataArray.join(lineSeparator)
   return prefixedData
@@ -52,20 +56,22 @@ function shellAsync(
       cwd: options.cwd,
       env: options.env,
       shell: true,
-      stdio: (options.prefix && "pipe") || options.stdio
+      stdio: options.stdio
     }
     const asyncProcess = spawn(command, spawnOptions)
     let output: string | null = null
     let stdout: Readable | null = asyncProcess.stdout
 
-    if (options.prefix) {
-      const stdoutPrefixTransformStream = prefixTransformStream(options.prefix)
-      const stderrPrefixTransformStream = prefixTransformStream(options.prefix)
+    if (options.transform) {
+      const stdoutPrefixTransformStream = prefixTransformStream(
+        options.transform
+      )
+      const stderrPrefixTransformStream = prefixTransformStream(
+        options.transform
+      )
       stdout = stdoutPrefixTransformStream
-      if (options.stdio === "inherit" || options.stdio[1] === "inherit") {
+      if (!options.silent) {
         stdoutPrefixTransformStream.pipe(process.stdout)
-      }
-      if (options.stdio === "inherit" || options.stdio[2] === "inherit") {
         stderrPrefixTransformStream.pipe(process.stdout)
       }
       asyncProcess.stdout.pipe(stdoutPrefixTransformStream)
@@ -115,27 +121,20 @@ function shellSync(
     const execSyncOptions = {
       cwd: options.cwd,
       env: options.env,
-      stdio: (options.prefix && "pipe") || options.stdio,
+      stdio: options.stdio,
       timeout: options.timeout
     }
     const buffer: string | Buffer = execSync(command, execSyncOptions)
     if (buffer) {
-      const output = options.prefix
-        ? prefixTransformString(options.prefix, buffer.toString())
-        : buffer.toString()
-      if (
-        execSyncOptions.stdio !== "inherit" &&
-        (options.stdio === "inherit" || options.stdio[1] === "inherit")
-      ) {
+      const output = prefixTransformString(options.transform, buffer.toString())
+      if (!options.silent) {
         process.stdout.write(output)
       }
       return output
     }
     return null
   } catch (error) {
-    const message = options.prefix
-      ? prefixTransformString(options.prefix, error.message)
-      : error.message
+    const message = prefixTransformString(options.transform, error.message)
     throw new ShellError(message)
   }
 }
@@ -156,13 +155,18 @@ export function shell(
 ): Promise<string | null> | string | null
 
 export function shell(command: string, options: IShellOptions = {}) {
-  const normalizedOptions = {
+  const stdio: NormalizedStdioOptions = options.nopipe
+    ? ["inherit", "inherit", "inherit"]
+    : ["inherit", "pipe", "pipe"]
+  const transform: TransformFunction = value => value
+  const normalizedOptions: INormalizedShellOptions = {
+    transform,
     ...options,
     env: {
       FORCE_COLOR: "1",
       ...(options.env || process.env)
     },
-    stdio: options.stdio || "inherit"
+    stdio
   }
   return normalizedOptions.async
     ? shellAsync(command, normalizedOptions)
