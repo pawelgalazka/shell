@@ -1,4 +1,6 @@
+import { execSync, spawn } from "child_process"
 import { Writable } from "stream"
+
 import {
   IAsyncShellOptions,
   IShellOptions,
@@ -23,7 +25,9 @@ describe("shell()", () => {
         write: stdoutWrite
       })
     }
-    options = { parentProcess }
+    options = { parentProcess, spawn, execSync }
+    jest.spyOn(options, "spawn")
+    jest.spyOn(options, "execSync")
   })
 
   describe("with async=true option", () => {
@@ -51,6 +55,19 @@ describe("shell()", () => {
     it("rejects if shell command fails", () => {
       return expect(shell("exit 1", options)).rejects.toThrow(
         "Command failed: exit 1"
+      )
+    })
+
+    it("calls spawn with proper options", () => {
+      return shell("echo 'command output'", options as IAsyncShellOptions).then(
+        output => {
+          expect(options.spawn).toHaveBeenCalledWith("echo 'command output'", {
+            cwd: undefined,
+            env: { FORCE_COLOR: "1" },
+            shell: true,
+            stdio: ["inherit", "pipe", "pipe"]
+          })
+        }
       )
     })
 
