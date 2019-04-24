@@ -14,7 +14,7 @@ shell('http-server', { async: true })
 Runs given command as a child process. Returns output of executed command.
 
 ```js
-const { sh } = require('@pawelgalazka/shell')
+const { shell } = require('@pawelgalazka/shell')
 ```
 
 *Options:*
