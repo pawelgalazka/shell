@@ -180,6 +180,16 @@ describe("shell()", () => {
       expect(() => shell("exit 1", options)).toThrow("Command failed: exit 1")
     })
 
+    it("calls execSync with proper options", () => {
+      shell("echo 'command output'", options)
+      expect(options.execSync).toHaveBeenCalledWith("echo 'command output'", {
+        cwd: undefined,
+        env: { FORCE_COLOR: "1" },
+        stdio: ["inherit", "pipe", "pipe"],
+        timeout: undefined
+      })
+    })
+
     describe("and option silent=true", () => {
       beforeEach(() => {
         options.silent = true
@@ -195,6 +205,16 @@ describe("shell()", () => {
           "command output\n"
         )
       })
+
+      it("calls execSync with proper options", () => {
+        shell("echo 'command output'", options)
+        expect(options.execSync).toHaveBeenCalledWith("echo 'command output'", {
+          cwd: undefined,
+          env: { FORCE_COLOR: "1" },
+          stdio: ["inherit", "pipe", "pipe"],
+          timeout: undefined
+        })
+      })
     })
 
     describe("and option nopipe=true", () => {
@@ -204,6 +224,16 @@ describe("shell()", () => {
 
       it("does not return command output", () => {
         expect(shell("echo 'command output'", options)).toBeNull()
+      })
+
+      it("calls execSync with proper options", () => {
+        shell("echo 'command output'", options)
+        expect(options.execSync).toHaveBeenCalledWith("echo 'command output'", {
+          cwd: undefined,
+          env: { FORCE_COLOR: "1" },
+          stdio: ["inherit", "inherit", "inherit"],
+          timeout: undefined
+        })
       })
     })
 
