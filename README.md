@@ -34,7 +34,6 @@ interface IShellOptions {
   nopipe?: boolean
   silent?: boolean
   transform?: (output: string) => string
-  parentProcess?: NodeJS.Process
 }
 ```
 
