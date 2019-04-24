@@ -27,6 +27,8 @@ export interface IShellOptions {
   silent?: boolean
   transform?: TransformFunction
   parentProcess?: NodeJS.Process
+  spawn?: typeof spawn
+  execSync?: typeof execSync
 }
 
 export interface IAsyncShellOptions extends IShellOptions {
@@ -40,6 +42,8 @@ export interface ISyncShellOptions extends IShellOptions {
 export interface INormalizedShellOptions extends IShellOptions {
   env: NodeJS.ProcessEnv
   stdio: NormalizedStdioOptions
+  spawn: typeof spawn
+  execSync: typeof execSync
   parentProcess: NodeJS.Process
 }
 
@@ -54,7 +58,7 @@ function shellAsync(
       shell: true,
       stdio: options.stdio
     }
-    const asyncProcess = spawn(command, spawnOptions)
+    const asyncProcess = options.spawn(command, spawnOptions)
     let output: string | null = null
     const { stdout } = setupStdoutStderrStreams(options, asyncProcess)
 
@@ -104,7 +108,7 @@ function shellSync(
       stdio: options.stdio,
       timeout: options.timeout
     }
-    const buffer: string | Buffer = execSync(command, execSyncOptions)
+    const buffer: string | Buffer = options.execSync(command, execSyncOptions)
     if (buffer) {
       const output = options.transform
         ? transformString(options.transform, buffer.toString())
@@ -151,7 +155,9 @@ export function shell(command: string, options: IShellOptions = {}) {
       FORCE_COLOR: "1",
       ...(options.env || parentProcess.env)
     },
+    execSync: options.execSync || execSync,
     parentProcess,
+    spawn: options.spawn || spawn,
     stdio
   }
   return normalizedOptions.async
