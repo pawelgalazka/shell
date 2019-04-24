@@ -4,6 +4,8 @@
 /.travis.yml
 /.prettierrc.json
 /.vscode
+/.babelrc
+/jest.config.js
 /tslint.json
 /tsconfig.json
 /sandbox
