@@ -159,6 +159,27 @@ describe("shell()", () => {
         })
       })
     })
+
+    describe("and option nopipe=true, silent=true given", () => {
+      beforeEach(() => {
+        options.nopipe = true
+        options.silent = true
+      })
+
+      it("calls spawn with proper options", () => {
+        return shell(
+          "echo 'command output'",
+          options as IAsyncShellOptions
+        ).then(output => {
+          expect(options.spawn).toHaveBeenCalledWith("echo 'command output'", {
+            cwd: undefined,
+            env: { FORCE_COLOR: "1" },
+            shell: true,
+            stdio: ["inherit", "ignore", "ignore"]
+          })
+        })
+      })
+    })
   })
 
   describe("with async=false option", () => {
@@ -246,6 +267,23 @@ describe("shell()", () => {
         expect(
           shell("echo 'command output 1' ; echo 'command output 2'", options)
         ).toEqual("[prefix] command output 1\n[prefix] command output 2\n")
+      })
+    })
+
+    describe("and option nopipe=true, silent=true given", () => {
+      beforeEach(() => {
+        options.nopipe = true
+        options.silent = true
+      })
+
+      it("calls spawn with proper options", () => {
+        shell("echo 'command output'", options)
+        expect(options.execSync).toHaveBeenCalledWith("echo 'command output'", {
+          cwd: undefined,
+          env: { FORCE_COLOR: "1" },
+          stdio: ["inherit", "ignore", "ignore"],
+          timeout: undefined
+        })
       })
     })
   })
