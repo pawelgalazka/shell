@@ -71,6 +71,21 @@ describe("shell()", () => {
       )
     })
 
+    it("calls spawn with custom options", () => {
+      options.cwd = "./sandbox"
+      options.env = { CUSTOM_ENV: "test" }
+      return shell("echo 'command output'", options as IAsyncShellOptions).then(
+        output => {
+          expect(options.spawn).toHaveBeenCalledWith("echo 'command output'", {
+            cwd: "./sandbox",
+            env: { CUSTOM_ENV: "test", FORCE_COLOR: "1" },
+            shell: true,
+            stdio: ["inherit", "pipe", "pipe"]
+          })
+        }
+      )
+    })
+
     describe("and option silent=true", () => {
       beforeEach(() => {
         options.silent = true
@@ -208,6 +223,19 @@ describe("shell()", () => {
         env: { FORCE_COLOR: "1" },
         stdio: ["inherit", "pipe", "pipe"],
         timeout: undefined
+      })
+    })
+
+    it("calls execSync with custom options", () => {
+      options.cwd = "./sandbox"
+      options.env = { CUSTOM_ENV: "test" }
+      options.timeout = 1000
+      shell("echo 'command output'", options)
+      expect(options.execSync).toHaveBeenCalledWith("echo 'command output'", {
+        cwd: "./sandbox",
+        env: { CUSTOM_ENV: "test", FORCE_COLOR: "1" },
+        stdio: ["inherit", "pipe", "pipe"],
+        timeout: 1000
       })
     })
 
