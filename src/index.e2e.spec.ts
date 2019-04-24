@@ -90,6 +90,20 @@ describe("shell()", () => {
           "command output\n"
         )
       })
+
+      it("calls spawn with proper options", () => {
+        return shell(
+          "echo 'command output'",
+          options as IAsyncShellOptions
+        ).then(output => {
+          expect(options.spawn).toHaveBeenCalledWith("echo 'command output'", {
+            cwd: undefined,
+            env: { FORCE_COLOR: "1" },
+            shell: true,
+            stdio: ["inherit", "pipe", "pipe"]
+          })
+        })
+      })
     })
 
     describe("and option nopipe=true", () => {
@@ -101,6 +115,20 @@ describe("shell()", () => {
         return expect(
           shell("echo 'command output'", options)
         ).resolves.toBeNull()
+      })
+
+      it("calls spawn with proper options", () => {
+        return shell(
+          "echo 'command output'",
+          options as IAsyncShellOptions
+        ).then(output => {
+          expect(options.spawn).toHaveBeenCalledWith("echo 'command output'", {
+            cwd: undefined,
+            env: { FORCE_COLOR: "1" },
+            shell: true,
+            stdio: ["inherit", "inherit", "inherit"]
+          })
+        })
       })
     })
 
@@ -115,6 +143,20 @@ describe("shell()", () => {
         ).resolves.toEqual(
           "[prefix] command output 1\n[prefix] command output 2\n"
         )
+      })
+
+      it("calls spawn with proper options", () => {
+        return shell(
+          "echo 'command output'",
+          options as IAsyncShellOptions
+        ).then(output => {
+          expect(options.spawn).toHaveBeenCalledWith("echo 'command output'", {
+            cwd: undefined,
+            env: { FORCE_COLOR: "1" },
+            shell: true,
+            stdio: ["inherit", "pipe", "pipe"]
+          })
+        })
       })
     })
   })
